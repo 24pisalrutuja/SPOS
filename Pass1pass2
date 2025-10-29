@@ -1,0 +1,98 @@
+import java.io.*;
+import java.util.*;
+
+public class Pass1 {
+    public static void main(String[] args) throws Exception {
+        BufferedReader br = new BufferedReader(new FileReader("input.txt"));
+        BufferedWriter inter = new BufferedWriter(new FileWriter("intermediate.txt"));
+        BufferedWriter sym = new BufferedWriter(new FileWriter("symtab.txt"));
+
+        Map<String, Integer> symtab = new HashMap<String, Integer>();
+        String line;
+        int lc = 0;
+
+        while ((line = br.readLine()) != null) {
+            String[] parts = line.trim().split("\\s+");
+
+            if (parts[0].equalsIgnoreCase("START")) {
+                lc = Integer.parseInt(parts[1]);
+                inter.write(line + "\n");
+            } else if (parts[0].equalsIgnoreCase("END")) {
+                inter.write(line + "\n");
+                break;
+            } else {
+                if (!parts[0].equals("-")) {
+                    symtab.put(parts[0], lc);
+                }
+                inter.write(lc + "\t" + line + "\n");
+                lc++;
+            }
+        }
+
+        // Write Symbol Table
+        sym.write("SYMBOL\tADDRESS\n");
+        for (String s : symtab.keySet())
+            sym.write(s + "\t" + symtab.get(s) + "\n");
+
+        br.close();
+        inter.close();
+        sym.close();
+
+        System.out.println("PASS 1 completed. Symbol table and intermediate file created.");
+    }
+}
+
+//pass2
+
+import java.io.*;
+import java.util.*;
+
+public class Pass2 {
+    public static void main(String[] args) throws Exception {
+        BufferedReader inter = new BufferedReader(new FileReader("intermediate.txt"));
+        BufferedReader sym = new BufferedReader(new FileReader("symtab.txt"));
+
+        Map<String, Integer> symtab = new HashMap<String, Integer>();
+        String line;
+
+        // Skip header
+        sym.readLine();
+        while ((line = sym.readLine()) != null) {
+            String[] parts = line.trim().split("\\s+");
+            symtab.put(parts[0], Integer.parseInt(parts[1]));
+        }
+
+        System.out.println("Machine Code:");
+        while ((line = inter.readLine()) != null) {
+            String[] parts = line.trim().split("\\s+");
+
+            if (parts[0].equalsIgnoreCase("START") || parts[0].equalsIgnoreCase("END"))
+                continue;
+
+            int addr = Integer.parseInt(parts[0]);
+            String label = parts[1];
+            String opcode = parts[2];
+            String operand = (parts.length > 3) ? parts[3] : "-";
+
+            if (symtab.containsKey(operand)) {
+                System.out.println(addr + "\t" + opcode + "\t" + symtab.get(operand));
+            } else {
+                System.out.println(addr + "\t" + opcode + "\t000");
+            }
+        }
+
+        inter.close();
+        sym.close();
+    }
+}
+
+
+
+input 
+START 200
+- READ A
+- MOVER B
+A DS 1
+B DC 5
+END
+
